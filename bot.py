@@ -11,7 +11,7 @@ CALL_PHONE = "+998945061080"
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 user_data = {}
 
-# ========== ADMIN GA XAVFSIZ YUBORISH ==========
+# ========== ADMIN GA YUBORISH ==========
 def notify_admin(text):
     try:
         bot.send_message(ADMIN_ID, text)
@@ -95,12 +95,6 @@ def get_problem(message):
 
     user_data[message.chat.id]["problem"] = message.text
 
-    notify_admin(
-        f"📝 <b>MUAMMO YOZILDI</b>\n"
-        f"🆔 {message.chat.id}\n"
-        f"✍️ {message.text}"
-    )
-
     bot.send_message(message.chat.id, "📍 Joylashuvni kiriting:\n(bino, qavat, xona)")
     bot.register_next_step_handler(message, get_location)
 
@@ -119,11 +113,12 @@ def get_location(message):
         reply_markup=markup
     )
 
-# ========== CONTACT (ASOSIY YAKUN) ==========
+# ========== CONTACT → YAKUNIY BOSQICH ==========
 @bot.message_handler(content_types=['contact'])
 def get_contact(message):
     data = user_data.get(message.chat.id, {})
 
+    # ADMIN uchun to‘liq ma’lumot
     admin_text = (
         "📥 <b>YANGI TEXNIK MUROJAAT</b>\n\n"
         f"👤 {message.from_user.full_name}\n"
@@ -137,10 +132,21 @@ def get_contact(message):
 
     notify_admin(admin_text)
 
+    # FOYDALANUVCHI uchun UMUMIY YAKUNIY XABAR
+    user_summary = (
+        "✅ <b>Murojaatingiz qabul qilindi!</b>\n\n"
+        "📋 <b>Siz kiritgan ma’lumotlar:</b>\n"
+        f"🔧 Qurilma: {data.get('device','-')}\n"
+        f"📝 Muammo: {data.get('problem','-')}\n"
+        f"📍 Joylashuv: {data.get('location','-')}\n"
+        f"📞 Telefon: {message.contact.phone_number}\n\n"
+        "📲 Texnik xodimlar tez orada siz bilan bog‘lanadi.\n"
+        "Rahmat!"
+    )
+
     bot.send_message(
         message.chat.id,
-        "✅ Murojaatingiz qabul qilindi.\n"
-        "Texnik xodimlar tez orada bog‘lanadi.",
+        user_summary,
         reply_markup=types.ReplyKeyboardRemove()
     )
 
