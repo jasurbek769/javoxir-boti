@@ -1,11 +1,12 @@
 import telebot
 from telebot import types
+import os
 
 # ========== SOZLAMALAR ==========
-TOKEN = "8520853563:AAHIeut62ZZeUC22FTYWJHBEIo9WR670Ux0"
-ADMIN_ID = 7950261926       # /myid orqali olingan ID
-CALL_PHONE = "+998945061080"
-# ===============================чёч
+TOKEN = os.getenv("BOT_TOKEN")
+ADMIN_ID = int(os.getenv("ADMIN_ID"))
+CALL_PHONE = os.getenv("CALL_PHONE")
+# ===============================
 
 bot = telebot.TeleBot(TOKEN)
 user_data = {}
@@ -39,7 +40,7 @@ def call_service(message):
     inline.add(
         types.InlineKeyboardButton(
             "📞 Qo‘ng‘iroq qilish",
-            callback_data="CALL_SERVICE_PHONE"   # ✅ url emas
+            callback_data="CALL_SERVICE_PHONE"
         )
     )
 
@@ -49,7 +50,6 @@ def call_service(message):
         reply_markup=inline
     )
 
-# ✅ Tugma bosilganda raqamni yuborib beradi
 @bot.callback_query_handler(func=lambda call: call.data == "CALL_SERVICE_PHONE")
 def call_service_phone(call):
     bot.answer_callback_query(call.id)
@@ -69,36 +69,23 @@ DEVICES = [
 @bot.message_handler(func=lambda m: m.text in DEVICES)
 def device_selected(message):
     user_data[message.chat.id] = {"device": message.text}
-
-    bot.send_message(
-        message.chat.id,
-        "📝 Muammoni qisqacha yozib bering:"
-    )
+    bot.send_message(message.chat.id, "📝 Muammoni qisqacha yozib bering:")
     bot.register_next_step_handler(message, get_problem)
 
 def get_problem(message):
     user_data[message.chat.id]["problem"] = message.text
-
-    bot.send_message(
-        message.chat.id,
-        "📍 Joylashuvni kiriting:\n(bino, qavat, xona)"
-    )
+    bot.send_message(message.chat.id, "📍 Joylashuvni kiriting:\n(bino, qavat, xona)")
     bot.register_next_step_handler(message, get_location)
 
 def get_location(message):
     user_data[message.chat.id]["location"] = message.text
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.add(
-        types.KeyboardButton(
-            "📞 Telefon raqamni yuborish",
-            request_contact=True
-        )
-    )
+    markup.add(types.KeyboardButton("📞 Telefon raqamni yuborish", request_contact=True))
 
     bot.send_message(
         message.chat.id,
-        "📞 Aloqa uchun telefon raqamingizni yuboring ESLATMA faol ishalydigan telefon raqam yuboring:",
+        "📞 Aloqa uchun telefon raqamingizni yuboring:",
         reply_markup=markup
     )
 
@@ -126,7 +113,7 @@ def get_contact(message):
         reply_markup=types.ReplyKeyboardRemove()
     )
 
-# ========== ADMIN PANEL ==========
+# ========== ADMIN ==========
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
     if message.chat.id != ADMIN_ID:
@@ -135,16 +122,13 @@ def admin_panel(message):
 
     bot.send_message(
         message.chat.id,
-        "👨‍💼 ADMIN PANEL\n\n"
-        "Barcha murojaatlar shu bot orqali keladi.\n"
-        "Bot normal ishlayapti ✅"
+        "👨‍💼 ADMIN PANEL\n\nBot normal ishlayapti ✅"
     )
 
-# ========== ADMIN ID OLISH ==========
 @bot.message_handler(commands=['myid'])
 def myid(message):
     bot.send_message(message.chat.id, f"Sizning ID: {message.chat.id}")
 
 # ========== ISHGA TUSHIRISH ==========
 bot.remove_webhook()
-bot.polling(none_stop=True)
+bot.infinity_polling()
