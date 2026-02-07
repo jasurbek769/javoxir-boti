@@ -4,7 +4,7 @@ import time
 
 # ================= SOZLAMALAR =================
 TOKEN = "8520853563:AAHIeut62ZZeUC22FTYWJHBEIo9WR670Ux0"
-ADMIN_ID = 7950261926
+ADMIN_ID = 642070470
 CALL_PHONE = "+998945061080"
 # ==============================================
 
@@ -139,3 +139,4 @@ def myid(message):
 # ========== ISHGA TUSHIRISH ==========
 bot.remove_webhook()
 bot.infinity_polling()
+
