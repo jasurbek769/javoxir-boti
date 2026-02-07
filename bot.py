@@ -42,6 +42,26 @@ def start(message):
         reply_markup=markup
     )
 
+# ========== ADMIN PANEL ==========
+@bot.message_handler(commands=['admin'])
+def admin_panel(message):
+    if message.chat.id != ADMIN_ID:
+        bot.send_message(message.chat.id, "⛔ Siz admin emassiz!")
+        return
+
+    bot.send_message(
+        message.chat.id,
+        "👨‍💼 <b>ADMIN PANEL</b>\n\n"
+        "• Barcha murojaatlar shu bot orqali keladi\n"
+        "• Yarim murojaatlar ham yo‘qolmaydi\n"
+        "• Bot barqaror ishlayapti ✅"
+    )
+
+# ========== ADMIN ID ==========
+@bot.message_handler(commands=['myid'])
+def myid(message):
+    bot.send_message(message.chat.id, f"Sizning ID: <b>{message.chat.id}</b>")
+
 # ========== QO‘NG‘IROQ ==========
 @bot.message_handler(func=lambda m: m.text == "📞 Texnik xizmatga qo‘ng‘iroq qilish")
 def call_service(message):
@@ -94,8 +114,7 @@ def get_problem(message):
         return
 
     user_data[message.chat.id]["problem"] = message.text
-
-    bot.send_message(message.chat.id, "📍 Joylashuvni kiriting:\n(bino, qavat, xona)")
+    bot.send_message(message.chat.id, "📍 Joylashuvni kiriting:")
     bot.register_next_step_handler(message, get_location)
 
 def get_location(message):
@@ -113,12 +132,11 @@ def get_location(message):
         reply_markup=markup
     )
 
-# ========== CONTACT → YAKUNIY BOSQICH ==========
+# ========== CONTACT → YAKUNIY ==========
 @bot.message_handler(content_types=['contact'])
 def get_contact(message):
     data = user_data.get(message.chat.id, {})
 
-    # ADMIN uchun to‘liq ma’lumot
     admin_text = (
         "📥 <b>YANGI TEXNIK MUROJAAT</b>\n\n"
         f"👤 {message.from_user.full_name}\n"
@@ -132,60 +150,35 @@ def get_contact(message):
 
     notify_admin(admin_text)
 
-    # FOYDALANUVCHI uchun UMUMIY YAKUNIY XABAR
-    user_summary = (
-        "✅ <b>Murojaatingiz qabul qilindi!</b>\n\n"
-        "📋 <b>Siz kiritgan ma’lumotlar:</b>\n"
-        f"🔧 Qurilma: {data.get('device','-')}\n"
-        f"📝 Muammo: {data.get('problem','-')}\n"
-        f"📍 Joylashuv: {data.get('location','-')}\n"
-        f"📞 Telefon: {message.contact.phone_number}\n\n"
-        "📲 Texnik xodimlar tez orada siz bilan bog‘lanadi.\n"
-        "Rahmat!"
-    )
-
     bot.send_message(
         message.chat.id,
-        user_summary,
+        "✅ <b>Murojaatingiz qabul qilindi!</b>\n\n"
+        "Texnik xodimlar tez orada siz bilan bog‘lanadi.",
         reply_markup=types.ReplyKeyboardRemove()
     )
 
     user_data.pop(message.chat.id, None)
 
-# ========== FALLBACK (YARIM MUROJAAT HAM YO‘QOLMAYDI) ==========
-@bot.message_handler(func=lambda m: True)
-def fallback(message):
-    if message.chat.id in user_data:
-        data = user_data[message.chat.id]
-
-        notify_admin(
-            "⚠️ <b>YARIM MUROJAAT</b>\n"
-            f"👤 {message.from_user.full_name}\n"
-            f"🆔 {message.chat.id}\n"
-            f"🔧 {data.get('device')}\n"
-            f"📝 {data.get('problem')}\n"
-            f"📍 {data.get('location')}\n"
-            f"✍️ Oxirgi xabar: {message.text}"
-        )
-
-# ========== ADMIN PANEL ==========
-@bot.message_handler(commands=['admin'])
-def admin_panel(message):
-    if message.chat.id != ADMIN_ID:
-        bot.send_message(message.chat.id, "⛔ Siz admin emassiz!")
-        return
-
-    bot.send_message(
-        message.chat.id,
-        "👨‍💼 <b>ADMIN PANEL</b>\n\n"
-        "Barcha murojaatlar shu bot orqali keladi.\n"
-        "Bot barqaror ishlayapti ✅"
+# ========== FALLBACK (ADMIN BUYRUQLARIGA TEGMAYDI) ==========
+@bot.message_handler(
+    func=lambda m: (
+        m.chat.id in user_data and
+        not m.text.startswith("/") and
+        m.text not in DEVICES
     )
+)
+def fallback(message):
+    data = user_data.get(message.chat.id)
 
-# ========== ADMIN ID ==========
-@bot.message_handler(commands=['myid'])
-def myid(message):
-    bot.send_message(message.chat.id, f"Sizning ID: <b>{message.chat.id}</b>")
+    notify_admin(
+        "⚠️ <b>YARIM MUROJAAT</b>\n"
+        f"👤 {message.from_user.full_name}\n"
+        f"🆔 {message.chat.id}\n"
+        f"🔧 {data.get('device')}\n"
+        f"📝 {data.get('problem')}\n"
+        f"📍 {data.get('location')}\n"
+        f"✍️ Oxirgi xabar: {message.text}"
+    )
 
 # ========== ISHGA TUSHIRISH ==========
 bot.remove_webhook()
